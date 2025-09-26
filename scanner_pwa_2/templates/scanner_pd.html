@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FRCK642NXJ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-FRCK642NXJ');
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scanner Archive</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+
+<div id="auth-banner" class="bg-gray-800 text-sm text-right py-1 px-4" style="position: sticky; top: 0; z-index: 10;"></div>
+
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-6 text-center">📻 Today's Police Calls</h1>
+  <div class="text-center mb-6">
+  <h2 class="text-xl font-semibold text-pink-400">🏛️ H.O.P.E. — Hopedale Office for Pretend Emergencies</h2>
+  <p class="text-sm text-gray-400 italic">"Readiness without relevance. Response without rush."</p>
+</div>
+  <div class="flex justify-between items-center mb-4">
+    <p class="text-sm text-gray-400">Total calls: {{ calls|length }}</p>
+    <div class="flex gap-4">
+      <a href="/scanner/archive" class="text-blue-400 hover:underline">View Archive &rarr;</a>
+      <a href="/scanner/segments" class="text-green-400 hover:underline">🌱 Make Us Better</a>
+    </div>
+  </div>
+
+
+
+<div id="calls-container">
+  {% for call in calls %}
+  <div class="mb-6 p-4 rounded-xl bg-gray-800 shadow-md call-entry">
+    <div class="text-sm text-gray-400 mb-1">{{ call.timestamp_human }} {{ call.feed }}</div>
+    <audio class="w-full mb-2" controls src="{{ call.path }}"></audio>
+
+    <div class="space-y-4">
+      {% if call.metadata and call.metadata.enhanced_transcript %}
+        <div>
+          <div class="text-purple-400 text-sm">✨ Enhanced Transcript</div>
+          <pre class="whitespace-pre-wrap bg-purple-900 p-3 rounded-md text-sm text-purple-100 overflow-auto">{{ call.metadata.enhanced_transcript }}</pre>
+        </div>
+      {% endif %}
+
+      {% if call.metadata and call.metadata.edited_transcript %}
+        <div>
+          <div class="text-green-400 text-sm">✅ Edited Transcript</div>
+          <pre class="whitespace-pre-wrap bg-green-800 p-3 rounded-md text-sm text-green-100 overflow-auto">{{ call.metadata.edited_transcript }}</pre>
+        </div>
+      {% elif call.edit_pending %}
+        <div>
+          <div class="text-yellow-400 text-sm">✏️ Edit Pending</div>
+          <pre class="whitespace-pre-wrap bg-yellow-800 p-3 rounded-md text-sm text-yellow-100 overflow-auto">{{ call.edited_transcript }}</pre>
+        </div>
+      {% endif %}
+
+      <div>
+        <div class="text-gray-400 text-sm">🎧 Original Transcript</div>
+        <pre id="pre-{{ loop.index }}" class="whitespace-pre-wrap bg-gray-700 p-3 rounded-md text-sm text-gray-200 overflow-auto">{{ call.transcript }}</pre>
+        <textarea id="edit-{{ loop.index }}" class="w-full bg-gray-800 text-sm p-3 rounded-md text-white border border-gray-600 hidden">{{ call.transcript }}</textarea>
+
+        <div class="flex gap-2 mt-2">
+          <button onclick="enableEdit({{ loop.index }})" class="text-yellow-400 hover:underline text-sm">Edit</button>
+          <button onclick="submitEdit('{{ call.file }}', '{{ call.feed }}', {{ loop.index }})" id="save-{{ loop.index }}" class="hidden text-green-400 hover:underline text-sm">Submit</button>
+          <button onclick="cancelEdit({{ loop.index }})" id="cancel-{{ loop.index }}" class="hidden text-red-400 hover:underline text-sm">Cancel</button>
+        </div>
+        <div id="msg-{{ loop.index }}" class="text-green-400 text-sm hidden">✔️ Thank you for your submission!</div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+
+  <div id="loading-indicator" class="text-center text-gray-400 py-4 hidden">Loading more calls...</div>
+  {% if not calls %}
+  <p class="text-gray-400">No calls available yet. Check back soon.</p>
+  {% endif %}
+</div>
+
+<script>
+let loading = false;
+let page = 1;
+let moreCalls = true;
+
+function isNearBottom() {
+  return (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 200);
+}
+
+async function loadMoreCalls() {
+  if (loading || !moreCalls || !isNearBottom()) return;
+  loading = true;
+  document.getElementById('loading-indicator').classList.remove('hidden');
+  page += 1;
+
+  const resp = await fetch(`/scanner?page=${page}`, { headers: { Accept: 'application/json' } });
+  if (resp.ok) {
+    const data = await resp.json();
+if (data.calls && data.calls.length > 0) {
+  const container = document.getElementById('calls-container');
+  data.calls.forEach((call, i) => {
+    const index = page * 10 + i + 1;  // ensure loop index is unique
+    const div = document.createElement('div');
+    div.className = 'mb-6 p-4 rounded-xl bg-gray-800 shadow-md call-entry';
+    div.innerHTML = `
+      <div class="text-sm text-gray-400 mb-1">${call.timestamp_human} ${call.feed || ''}</div>
+      <audio class="w-full mb-2" controls src="${call.path}"></audio>
+      <div class="space-y-2">
+        ${call.edit_pending ? `
+          <div class="text-yellow-400 text-sm">✏️ Edit Pending</div>
+          <pre class="whitespace-pre-wrap bg-yellow-800 p-3 rounded-md text-sm text-yellow-100 overflow-auto">${call.edited_transcript}</pre>
+          <div class="text-sm text-gray-400">Original Transcript:</div>
+          <pre class="whitespace-pre-wrap bg-gray-700 p-3 rounded-md text-sm text-gray-300 overflow-auto">${call.transcript}</pre>
+        ` : `
+          <pre id="pre-${index}" class="whitespace-pre-wrap bg-gray-700 p-3 rounded-md text-sm text-gray-200 overflow-auto">${call.transcript}</pre>
+          <textarea id="edit-${index}" class="w-full bg-gray-800 text-sm p-3 rounded-md text-white border border-gray-600 hidden">${call.transcript}</textarea>
+          <div class="flex gap-2">
+            <button onclick="enableEdit(${index})" class="text-yellow-400 hover:underline text-sm">Edit</button>
+            <button onclick="submitEdit('${call.file}', '${call.feed}', ${index})" id="save-${index}" class="hidden text-green-400 hover:underline text-sm">Submit</button>
+            <button onclick="cancelEdit(${index})" id="cancel-${index}" class="hidden text-red-400 hover:underline text-sm">Cancel</button>
+          </div>
+          <div id="msg-${index}" class="text-green-400 text-sm hidden">✔️ Thank you for your submission!</div>
+        `}
+      </div>
+    `;
+    container.appendChild(div);
+  });
+} else {
+  moreCalls = false;
+}
+
+  }
+  loading = false;
+  document.getElementById('loading-indicator').classList.add('hidden');
+}
+
+function enableEdit(id) {
+  document.getElementById(`pre-${id}`).classList.add("hidden");
+  document.getElementById(`edit-${id}`).classList.remove("hidden");
+  document.getElementById(`save-${id}`).classList.remove("hidden");
+  document.getElementById(`cancel-${id}`).classList.remove("hidden");
+  document.getElementById(`msg-${id}`).classList.add("hidden");
+}
+
+function cancelEdit(id) {
+  const pre = document.getElementById(`pre-${id}`);
+  const edit = document.getElementById(`edit-${id}`);
+  edit.value = pre.innerText.trim();
+  edit.classList.add("hidden");
+  pre.classList.remove("hidden");
+  document.getElementById(`save-${id}`).classList.add("hidden");
+  document.getElementById(`cancel-${id}`).classList.add("hidden");
+}
+
+async function submitEdit(filename, feed, id) {
+  const edited = document.getElementById(`edit-${id}`).value;
+  const resp = await fetch("/scanner/submit_edit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ filename, feed, transcript: edited })
+  });
+
+  if (resp.ok) {
+    document.getElementById(`save-${id}`).classList.add("hidden");
+    document.getElementById(`cancel-${id}`).classList.add("hidden");
+    document.getElementById(`edit-${id}`).classList.add("hidden");
+    document.getElementById(`pre-${id}`).classList.remove("hidden");
+    document.getElementById(`msg-${id}`).classList.remove("hidden");
+  } else {
+    alert("Submission failed.");
+  }
+}
+
+window.addEventListener('scroll', loadMoreCalls);
+window.addEventListener('touchmove', loadMoreCalls);
+</script>
+
+<script>
+  // Auth status checker
+  (async function checkAuthStatus() {
+    const authBanner = document.getElementById('auth-banner');
+    if (!authBanner) return;
+    const sessionId = localStorage.getItem('session_id');
+
+    function showLoggedOutState() {
+      authBanner.innerHTML = '<a href="/scanner/login?next=' + window.location.pathname + '" class="text-green-400 hover:underline">Login</a>';
+    }
+
+    if (!sessionId) {
+      showLoggedOutState();
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8010/get_session_data?session_id=${sessionId}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        const username = data.userInfo || 'user';
+        authBanner.innerHTML = `
+          <span class="mr-4">Logged in as: <strong>${username}</strong></span>
+          <button onclick="handleLogout()" class="text-red-400 hover:underline">Logout</button>
+        `;
+      } else {
+        localStorage.removeItem('session_id');
+        showLoggedOutState();
+      }
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+      authBanner.innerHTML = '<span>Login status unavailable</span>';
+    }
+  })();
+
+  function handleLogout() {
+    const sessionId = localStorage.getItem('session_id');
+    if (sessionId) {
+      fetch(`http://localhost:8010/api/logout?session_id=${sessionId}`, { method: 'POST', keepalive: true }).catch(err => console.error('Logout API call failed:', err));
+    }
+    localStorage.removeItem('session_id');
+    window.location.href = '/scanner/logout';
+  }
+</script>
+
+</body>
+</html>
