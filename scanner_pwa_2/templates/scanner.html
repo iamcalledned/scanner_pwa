@@ -1,14 +1,16 @@
-<!-- scanner_landing.html -->
+<!-- Updated Scanner Landing Page with improved login styling and persistent login button -->
+<!-- Based on the original scanner.html from scanner_pwa/templates -->
 <html lang="en">
 <head>
   <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FRCK642NXJ"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-FRCK642NXJ');
-  </script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FRCK642NXJ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-FRCK642NXJ');
+</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Scanner Call Archive</title>
@@ -17,12 +19,12 @@
 </head>
 <body class="bg-gray-900 text-white font-sans">
 
+
+
   <div class="max-w-4xl mx-auto px-4 py-16">
-    <div class="flex items-center justify-between mb-6">
+    <!-- Page header without embedded login button -->
+    <div class="flex items-center justify-center mb-6">
       <h1 class="text-4xl font-bold text-center">📻 Hopedale Scanner Archive</h1>
-      <div id="auth-status">
-        <a href="/scanner/login?next=/scanner" class="bg-green-600 hover:bg-green-500 text-white px-3 py-2 rounded">Login</a>
-      </div>
     </div>
     
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -44,31 +46,99 @@
     </div>
   </div>
 
-  <!-- Install button (hidden until beforeinstallprompt fires) -->
-  <div class="fixed bottom-6 right-6 z-50">
-    <button id="pwa-install-btn" class="hidden bg-blue-600 text-white px-4 py-2 rounded shadow-lg">Install</button>
-  </div>
+    <!-- Install button (hidden until beforeinstallprompt fires) -->
+<!-- SW update toast (bottom-left, glass/floaty) -->
+<div class="fixed bottom-6 left-6 z-50 pointer-events-none">
+  <div id="sw-toast"
+       class="hidden pointer-events-auto px-4 py-3 rounded-2xl
+              bg-gray-900/60 backdrop-blur-md
+              ring-1 ring-white/10 shadow-xl shadow-black/30
+              text-white text-sm transition-all duration-200
+              opacity-0 translate-y-2">
+    <div class="flex items-start gap-3">
+      <!-- icon -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mt-0.5 text-yellow-300" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M10 2a4 4 0 00-4 4v1.586L4.707 10.88A1 1 0 005.414 13h9.172a1 1 0 00.707-1.12L14 7.586V6a4 4 0 00-4-4z"/>
+        <path d="M8 15a2 2 0 104 0H8z"/>
+      </svg>
 
-  <!-- Notifications menu -->
-  <div class="fixed bottom-6 right-44 z-50">
-    <div id="notif-menu" class="bg-gray-800 text-white px-3 py-2 rounded shadow-lg">
-      <div class="flex items-center space-x-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a4 4 0 00-4 4v1.586L4.707 10.88A1 1 0 005.414 13h9.172a1 1 0 00.707-1.12L14 7.586V6a4 4 0 00-4-4z"/><path d="M8 15a2 2 0 104 0H8z"/></svg>
-        <div id="notif-status">Notifications: <span id="notif-state">unknown</span></div>
+      <div class="min-w-[220px]">
+        <div class="font-medium">Update available</div>
+        <div class="text-white/80 text-xs">A new version is ready. Refresh to get the latest.</div>
+
+        <div class="mt-3 flex items-center gap-2">
+          <button id="sw-update"
+                  class="px-3 py-1.5 rounded-lg
+                         bg-blue-700/80 hover:bg-blue-600
+                         backdrop-blur-sm ring-1 ring-white/10
+                         shadow-sm transition">
+            Update now
+          </button>
+          <button id="sw-later"
+                  class="px-3 py-1.5 rounded-lg
+                         bg-gray-700/80 hover:bg-gray-700
+                         backdrop-blur-sm ring-1 ring-white/10
+                         shadow-sm transition">
+            Later
+          </button>
+        </div>
       </div>
-      <div class="mt-2">
-        <button id="notif-toggle" class="bg-blue-600 text-white px-3 py-1 rounded">Enable</button>
-        <button id="notif-unsub" class="ml-2 bg-gray-600 text-white px-3 py-1 rounded hidden">Disable</button>
-      </div>
-      <div id="notif-msg" class="text-xs text-gray-300 mt-2"></div>
     </div>
   </div>
+</div>
 
-  <!-- Service Worker registration -->
+<!-- Notifications menu (glass/floaty like the login) -->
+<div class="fixed bottom-6 right-6 z-50 pointer-events-none">
+  <div
+    id="notif-menu"
+    class="pointer-events-auto px-4 py-3 rounded-2xl
+           bg-gray-900/60 backdrop-blur-md
+           ring-1 ring-white/10 shadow-xl shadow-black/30
+           text-white text-sm transition-all duration-200"
+  >
+    <div class="flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-300" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M10 2a4 4 0 00-4 4v1.586L4.707 10.88A1 1 0 005.414 13h9.172a1 1 0 00.707-1.12L14 7.586V6a4 4 0 00-4-4z"/>
+        <path d="M8 15a2 2 0 104 0H8z"/>
+      </svg>
+      <div id="notif-status" class="leading-5">
+        Notifications: <span id="notif-state" class="font-medium text-white/90">unknown</span>
+      </div>
+    </div>
+
+    <div class="mt-3 flex items-center gap-2">
+      <button
+        id="notif-toggle"
+        class="px-3 py-1.5 rounded-lg
+               bg-blue-700/80 hover:bg-blue-600
+               backdrop-blur-sm
+               ring-1 ring-white/10
+               shadow-sm transition"
+      >
+        Enable
+      </button>
+      <button
+        id="notif-unsub"
+        class="hidden px-3 py-1.5 rounded-lg
+               bg-gray-700/80 hover:bg-gray-700
+               backdrop-blur-sm
+               ring-1 ring-white/10
+               shadow-sm transition"
+      >
+        Disable
+      </button>
+    </div>
+
+    <div id="notif-msg" class="mt-2 text-xs text-white/70"></div>
+  </div>
+</div>
+
+
+  <!-- Rest of original script content remains unchanged -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/scanner/sw.js').then(function(registration) {
+    navigator.serviceWorker.register('/scanner/sw.js').then(function(registration) {
           console.log('ServiceWorker registration successful with scope: ', registration.scope);
 
           // If there's an updated worker waiting, prompt user
@@ -252,325 +322,154 @@
     })();
   </script>
 
-  <script>
-    // Push subscription UI logic
-    (function() {
-      const vapidUrl = '/scanner/push/vapid_public';
-      const subscribeUrl = '/scanner/push/subscribe';
-      const unsubscribeUrl = '/scanner/push/unsubscribe';
+    <script>
+      // Push subscription UI logic
+      (function() {
+        const vapidUrl = '/scanner/push/vapid_public';
+        const subscribeUrl = '/scanner/push/subscribe';
+        const unsubscribeUrl = '/scanner/push/unsubscribe';
 
-      const stateEl = document.getElementById('notif-state');
-      const toggleBtn = document.getElementById('notif-toggle');
-      const unsubBtn = document.getElementById('notif-unsub');
-      const msgEl = document.getElementById('notif-msg');
+        const stateEl = document.getElementById('notif-state');
+        const toggleBtn = document.getElementById('notif-toggle');
+        const unsubBtn = document.getElementById('notif-unsub');
+        const msgEl = document.getElementById('notif-msg');
 
-      function setState(s) { stateEl.textContent = s; }
-      function setMsg(s) { msgEl.textContent = s; }
+        function setState(s) { stateEl.textContent = s; }
+        function setMsg(s) { msgEl.textContent = s; }
 
-      async function urlBase64ToUint8Array(base64String) {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-        for (let i = 0; i < rawData.length; ++i) {
-          outputArray[i] = rawData.charCodeAt(i);
-        }
-        return outputArray;
-      }
-
-      async function getVapidKey() {
-        const r = await fetch(vapidUrl);
-        if (!r.ok) throw new Error('no vapid key');
-        return (await r.text()).trim();
-      }
-
-      async function subscribePush() {
-        if (!('serviceWorker' in navigator)) { setMsg('No service worker'); return; }
-        try {
-          const reg = await navigator.serviceWorker.ready;
-          const vapid = await getVapidKey();
-          console.log('vapid key fetched (len):', vapid && vapid.length);
-          if (!vapid || typeof vapid !== 'string') throw new Error('invalid vapid key');
-          const key = await urlBase64ToUint8Array(vapid);
-          console.log('applicationServerKey ready, length', key.length);
-          const sub = await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: key
-          });
-          // send the serializable subscription data
-          const j = await fetch(subscribeUrl, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(sub.toJSON())});
-          if (j.ok) {
-            setMsg('Subscribed for notifications');
-            setState('enabled');
-            toggleBtn.classList.add('hidden');
-            unsubBtn.classList.remove('hidden');
-          } else {
-            setMsg('Subscription save failed');
+        async function urlBase64ToUint8Array(base64String) {
+          const padding = '='.repeat((4 - base64String.length % 4) % 4);
+          const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+          const rawData = window.atob(base64);
+          const outputArray = new Uint8Array(rawData.length);
+          for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
           }
-        } catch (e) {
-          console.error('subscribePush error', e);
-          setMsg('Subscribe error: ' + (e && e.message));
-        }
-      }
-
-      async function unsubscribePush() {
-        try {
-          const reg = await navigator.serviceWorker.ready;
-          const sub = await reg.pushManager.getSubscription();
-          if (sub) {
-            await fetch(unsubscribeUrl, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({endpoint: sub.endpoint})});
-            await sub.unsubscribe();
-            setMsg('Unsubscribed');
-            setState('disabled');
-            toggleBtn.classList.remove('hidden');
-            unsubBtn.classList.add('hidden');
-          }
-        } catch (e) { setMsg('Unsubscribe error'); }
-      }
-
-      toggleBtn.addEventListener('click', async () => {
-        if (Notification.permission === 'default') {
-          const p = await Notification.requestPermission();
-          if (p !== 'granted') { setMsg('Notification permission denied'); return; }
-          // fallthrough to subscribe
-        }
-        await subscribePush();
-      });
-
-      unsubBtn.addEventListener('click', async () => {
-        await unsubscribePush();
-      });
-
-      // initialize UI based on current subscription
-      (async function initPushUI() {
-        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-          setState('unsupported');
-          toggleBtn.disabled = true;
-          return;
-        }
-        try {
-          const reg = await navigator.serviceWorker.ready;
-          const sub = await reg.pushManager.getSubscription();
-          if (sub) {
-            setState('enabled');
-            toggleBtn.classList.add('hidden');
-            unsubBtn.classList.remove('hidden');
-          } else {
-            setState(Notification.permission === 'granted' ? 'disabled' : 'prompt');
-          }
-        } catch (e) { setState('error'); }
-      })();
-
-    })();
-  </script>
-
-<script>
-  // ===== Auth status (robust) =====
-  (function () {
-    // Use same-origin in prod; fall back to localhost in dev
-    const DEV = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-    const API_BASE = ''; // '' => same origin
-
-    // If login redirected back with ?session_id=..., capture & clean URL
-    (function captureSessionIdFromURL() {
-      const sp = new URLSearchParams(location.search);
-      const sid = sp.get('session_id');
-      if (sid) {
-        localStorage.setItem('session_id', sid);
-        // remove it from the URL without reloading
-        sp.delete('session_id');
-        const newUrl = `${location.pathname}${sp.toString() ? '?' + sp.toString() : ''}${location.hash || ''}`;
-        history.replaceState(null, '', newUrl);
-      }
-    })();
-
-    const authStatusDiv = document.getElementById('auth-status');
-
-    function renderLoggedOut() {
-      authStatusDiv.innerHTML = '<a href="/scanner/login?next=/scanner" class="bg-green-600 hover:bg-green-500 text-white px-3 py-2 rounded">Login</a>';
-    }
-
-    function renderLoggedIn(username) {
-      const safeName = (username || 'user').toString().replace(/[<>&"]/g, s => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[s]));
-      authStatusDiv.innerHTML = `
-        <div class="flex items-center">
-          <span class="mr-4">Logged in as: <strong>${safeName}</strong></span>
-          <button id="logout-btn" class="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded">Logout</button>
-        </div>
-      `;
-      const btn = document.getElementById('logout-btn');
-      if (btn) btn.addEventListener('click', logout, { once: true });
-    }
-
-    function getSessionId() {
-      return localStorage.getItem('session_id') || '';
-    }
-
-    function authHeaders() {
-      const sid = getSessionId();
-      const h = { 'Accept': 'application/json' };
-      if (sid) h['Authorization'] = sid; // Option 2: session_id in Authorization header
-      return h;
-    }
-
-    async function fetchMe() {
-      // Prefer same-origin cookies; also send Authorization header for your Option 2 flow
-      const res = await fetch(`${API_BASE}/scanner/me`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: authHeaders()
-      }).catch(() => null);
-      if (!res || !res.ok) return null;
-      // expected shape: { userInfo: "ned" } or { username: "ned" }
-      const j = await res.json().catch(() => ({}));
-      return j;
-    }
-
-    async function updateAuthUI() {
-      const sid = getSessionId();
-
-      // If no sid AND you rely solely on cookie auth, still try /scanner/me
-      if (!sid && !DEV) {
-        const me = await fetchMe();
-        if (me && (me.userInfo || me.username)) {
-          return renderLoggedIn(me.userInfo || me.username);
-        }
-        return renderLoggedOut();
-      }
-
-      // If we have a sid (or we're in dev), ask backend who we are
-      const me = await fetchMe();
-      if (me && (me.userInfo || me.username)) {
-        renderLoggedIn(me.userInfo || me.username);
-      } else {
-        // invalid / expired — clear it and show logged out
-        if (sid) localStorage.removeItem('session_id');
-        renderLoggedOut();
-      }
-    }
-
-    async function logout() {
-      const sid = getSessionId();
-      try {
-        await fetch(`${API_BASE}/scanner/logout`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
-          body: JSON.stringify({ session_id: sid })
-        });
-      } catch (e) {
-        // ignore network errors
-      }
-      localStorage.removeItem('session_id');
-      renderLoggedOut();
-      // send user back to landing (adjust if you want a different target)
-      window.location.href = '/scanner/';
-    }
-
-    // Initial paint
-    updateAuthUI();
-
-    // Keep UI fresh when session_id changes in another tab
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'session_id') updateAuthUI();
-    });
-
-    // Refresh on tab focus or when returning to page
-    window.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') updateAuthUI();
-    });
-    window.addEventListener('focus', updateAuthUI);
-  })();
-</script>
-
-  <!-- Only logout when navigating off iamcalledned.ai -->
-  <script>
-    (function () {
-      const DOMAIN_ROOT = 'iamcalledned.ai';              // treat this root + all subdomains as internal
-      const LOGOUT_BEACON_URL = 'http://localhost:8010/api/logout';
-
-      function isSameIcnDomain(url) {
-        try {
-          const u = (url instanceof URL) ? url : new URL(url, location.href);
-          const h = u.hostname;
-          return h === DOMAIN_ROOT || h.endsWith('.' + DOMAIN_ROOT);
-        } catch { return false; }
-      }
-
-      function markExternalNavPending(isExternal) {
-        try {
-          if (isExternal) {
-            sessionStorage.setItem('pendingExternalNav', '1');
-          } else {
-            sessionStorage.removeItem('pendingExternalNav');
-          }
-        } catch {}
-      }
-
-      function getPendingExternalNav() {
-        try { return sessionStorage.getItem('pendingExternalNav') === '1'; }
-        catch { return false; }
-      }
-
-      function handleAnchorClick(e) {
-        const a = e.target && e.target.closest && e.target.closest('a[href]');
-        if (!a) return;
-
-        const href = a.getAttribute('href');
-        if (!href || href.startsWith('#') || href.startsWith('javascript:') ||
-            href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('blob:')) {
-          return markExternalNavPending(false);
+          return outputArray;
         }
 
-        const url = new URL(href, location.href);
-        const external = !isSameIcnDomain(url);
-
-        const opensNewContext = a.target && a.target.toLowerCase() === '_blank';
-        if (!opensNewContext) {
-          markExternalNavPending(external);
-        } else {
-          markExternalNavPending(false);
+        async function getVapidKey() {
+          const r = await fetch(vapidUrl);
+          if (!r.ok) throw new Error('no vapid key');
+          return (await r.text()).trim();
         }
-      }
 
-      document.addEventListener('click', handleAnchorClick, { capture: true });
-      document.addEventListener('auxclick', (e) => {
-        if (e.button === 1) handleAnchorClick(e); // middle-click
-      }, { capture: true });
-
-      // Intercept window.open calls
-      const _open = window.open;
-      window.open = function (url, target, features) {
-        try {
-          const isExternal = url && !isSameIcnDomain(new URL(url, location.href));
-          const opensNew = (target && target.toLowerCase() === '_blank') || !target;
-          if (!opensNew) markExternalNavPending(isExternal);
-          else markExternalNavPending(false);
-        } catch {
-          markExternalNavPending(false);
-        }
-        return _open.apply(this, arguments);
-      };
-
-      // Internal history moves shouldn't trigger logout
-      window.addEventListener('popstate', () => markExternalNavPending(false));
-
-      // Prefer pagehide for reliable beacons (works with bfcache)
-      window.addEventListener('pagehide', function () {
-        const sessionId = localStorage.getItem('session_id');
-        if (!sessionId) return;
-
-        if (getPendingExternalNav()) {
+        async function subscribePush() {
+          if (!('serviceWorker' in navigator)) { setMsg('No service worker'); return; }
           try {
-            const data = JSON.stringify({ session_id: sessionId });
-            navigator.sendBeacon(LOGOUT_BEACON_URL, data);
-          } catch {}
+            const reg = await navigator.serviceWorker.ready;
+            const vapid = await getVapidKey();
+            console.log('vapid key fetched (len):', vapid && vapid.length);
+            if (!vapid || typeof vapid !== 'string') throw new Error('invalid vapid key');
+            const key = await urlBase64ToUint8Array(vapid);
+            console.log('applicationServerKey ready, length', key.length);
+            const sub = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: key
+            });
+            // send the serializable subscription data
+            const j = await fetch(subscribeUrl, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(sub.toJSON())});
+            if (j.ok) {
+              setMsg('Subscribed for notifications');
+              setState('enabled');
+              toggleBtn.classList.add('hidden');
+              unsubBtn.classList.remove('hidden');
+            } else {
+              setMsg('Subscription save failed');
+            }
+          } catch (e) {
+            console.error('subscribePush error', e);
+            setMsg('Subscribe error: ' + (e && e.message));
+          }
         }
-        // Clear for the next lifecycle
-        markExternalNavPending(false);
-      });
-    })();
-  </script>
+
+        async function unsubscribePush() {
+          try {
+            const reg = await navigator.serviceWorker.ready;
+            const sub = await reg.pushManager.getSubscription();
+            if (sub) {
+              await fetch(unsubscribeUrl, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({endpoint: sub.endpoint})});
+              await sub.unsubscribe();
+              setMsg('Unsubscribed');
+              setState('disabled');
+              toggleBtn.classList.remove('hidden');
+              unsubBtn.classList.add('hidden');
+            }
+          } catch (e) { setMsg('Unsubscribe error'); }
+        }
+
+        toggleBtn.addEventListener('click', async () => {
+          if (Notification.permission === 'default') {
+            const p = await Notification.requestPermission();
+            if (p !== 'granted') { setMsg('Notification permission denied'); return; }
+          }
+          await subscribePush();
+        });
+
+        unsubBtn.addEventListener('click', async () => {
+          await unsubscribePush();
+        });
+
+        // initialize UI based on current subscription
+        (async function initPushUI() {
+          if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            setState('unsupported');
+            toggleBtn.disabled = true;
+            return;
+          }
+          try {
+            const reg = await navigator.serviceWorker.ready;
+            const sub = await reg.pushManager.getSubscription();
+            if (sub) {
+              setState('enabled');
+              toggleBtn.classList.add('hidden');
+              unsubBtn.classList.remove('hidden');
+            } else {
+              setState(Notification.permission === 'granted' ? 'disabled' : 'prompt');
+            }
+          } catch (e) { setState('error'); }
+        })();
+
+      })();
+    </script>
+<div id="auth-fixed" class="fixed top-4 right-4 z-50">
+  <a id="auth-btn" href="/scanner/login"
+     class="px-3 py-2 rounded-lg bg-blue-700/80 hover:bg-blue-600 backdrop-blur text-white text-sm shadow">
+    🔒 Login
+  </a>
+  <div id="auth-menu" class="hidden bg-gray-800 text-sm text-white rounded-lg shadow p-3 mt-2">
+    <div id="auth-user" class="text-xs text-gray-300 mb-2"></div>
+    <a href="/scanner/logout" class="underline">Logout</a>
+  </div>
+</div>
+<script type="module">
+  async function refreshAuthUI() {
+    try {
+      // IMPORTANT: ask Flask for status OR call FastAPI directly.
+      // If you added a Flask proxy endpoint, use '/scanner/api/me' instead.
+      const r = await fetch('/scanner/api/me', { cache: 'no-store', credentials: 'same-origin' });
+      const j = await r.json();
+      const btn  = document.getElementById('auth-btn');
+      const menu = document.getElementById('auth-menu');
+      const user = document.getElementById('auth-user');
+      if (j && j.authenticated) {
+        btn.textContent = '👤 Account';
+        btn.href = '#';
+        btn.onclick = (e) => { e.preventDefault(); menu.classList.toggle('hidden'); };
+        user.textContent = (j.user && (j.user.email || j.user.username)) || 'Signed in';
+      } else {
+        btn.textContent = '🔒 Login';
+        btn.href = '/scanner/login';
+        btn.onclick = null;
+        menu.classList.add('hidden');
+      }
+    } catch {}
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshAuthUI();
+  });
+  window.addEventListener('load', refreshAuthUI);
+</script>
 
 </body>
 </html>

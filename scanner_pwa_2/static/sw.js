@@ -1,4 +1,4 @@
-const CACHE_NAME = 'scanner-cache-v2';
+const CACHE_NAME = 'scanner-cache-v3';
 const OFFLINE_URL = 'offline.html';
 
 // Use relative paths so this worker works under /scanner/ when installed there.
@@ -59,15 +59,40 @@ self.addEventListener('message', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
-  // Navigation requests: serve cached offline page when network fails
+  const url = new URL(event.request.url);
+
+  // --- 1) AUTH + JSON: NEVER cache ---
+  // Auth status endpoint (and any scanner API JSON) must always hit network
+  const isScannerApi = url.pathname.startsWith('/scanner/api/');
+  const isAuthStatus = url.pathname === '/scanner/api/me';
+  const acceptsJson = (event.request.headers.get('accept') || '').includes('application/json');
+
+  if (isAuthStatus || isScannerApi || acceptsJson) {
+    const noStoreReq = new Request(event.request, { cache: 'no-store' });
+    event.respondWith(fetch(noStoreReq));
+    return;
+  }
+
+  // --- 2) HTML navigations: network-first with offline fallback ---
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
-        .then((response) => response)
-        .catch(() => caches.match(OFFLINE_URL))
+      fetch(event.request).catch(() => caches.match(OFFLINE_URL))
     );
     return;
   }
+
+  // --- 3) Everything else: your existing network-first + fill cache ---
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        const resClone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
+  );
+});
+
 
   event.respondWith(
     fetch(event.request)

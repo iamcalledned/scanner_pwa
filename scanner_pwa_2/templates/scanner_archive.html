@@ -1,3 +1,4 @@
+<!-- Updated scanner_archive.html with persistent login button -->
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -6,6 +7,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 text-white font-sans">
+  <!-- Persistent login button -->
+  <a href="/scanner/login" class="fixed top-4 right-4 z-50 flex items-center bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-md shadow-lg">
+    🔒 Login
+  </a>
   <div class="max-w-4xl mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-6 text-center">📁 Scanner Call Archive by Day</h1>
     <a href="/scanner" class="text-blue-400 hover:underline">&larr; Back to Today</a>
@@ -73,8 +78,8 @@ document.addEventListener('DOMContentLoaded', function() {
               }
             } else {
               // fallback: update count manually
-              const container = btn.closest('.call-list');
-              const updatedCount = container.querySelectorAll('audio').length;
+              const containerEl = btn.closest('.call-list');
+              const updatedCount = containerEl.querySelectorAll('audio').length;
               const countSpan = document.getElementById('call-count-' + day);
               if (countSpan) {
                 countSpan.textContent = `(${updatedCount} calls)`;
@@ -97,5 +102,44 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
   </script>
+  <div id="auth-fixed" class="fixed top-4 right-4 z-50">
+  <a id="auth-btn" href="/scanner/login"
+     class="px-3 py-2 rounded-lg bg-blue-700/80 hover:bg-blue-600 backdrop-blur text-white text-sm shadow">
+    🔒 Login
+  </a>
+  <div id="auth-menu" class="hidden bg-gray-800 text-sm text-white rounded-lg shadow p-3 mt-2">
+    <div id="auth-user" class="text-xs text-gray-300 mb-2"></div>
+    <a href="/scanner/logout" class="underline">Logout</a>
+  </div>
+</div>
+<script type="module">
+  async function refreshAuthUI() {
+    try {
+      // IMPORTANT: ask Flask for status OR call FastAPI directly.
+      // If you added a Flask proxy endpoint, use '/scanner/api/me' instead.
+      const r = await fetch('/scanner/api/me', { cache: 'no-store', credentials: 'same-origin' });
+      const j = await r.json();
+      const btn  = document.getElementById('auth-btn');
+      const menu = document.getElementById('auth-menu');
+      const user = document.getElementById('auth-user');
+      if (j && j.authenticated) {
+        btn.textContent = '👤 Account';
+        btn.href = '#';
+        btn.onclick = (e) => { e.preventDefault(); menu.classList.toggle('hidden'); };
+        user.textContent = (j.user && (j.user.email || j.user.username)) || 'Signed in';
+      } else {
+        btn.textContent = '🔒 Login';
+        btn.href = '/scanner/login';
+        btn.onclick = null;
+        menu.classList.add('hidden');
+      }
+    } catch {}
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshAuthUI();
+  });
+  window.addEventListener('load', refreshAuthUI);
+</script>
+
 </body>
 </html>

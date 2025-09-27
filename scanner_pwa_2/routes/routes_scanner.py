@@ -421,16 +421,13 @@ def submit_segment_label():
 
 @scanner_bp.route('/scanner/callback')
 def scanner_callback():
-    """Accept the session_id from the login process and redirect to the target page."""
+    """Accept the session_id from the login process, save to localStorage, and redirect."""
     session_id = request.args.get('session_id')
     return_to = request.args.get('return_to', '/scanner')
     if not session_id:
         return "Error: session_id missing", 400
 
-    # Redirect to the final destination, adding the session_id as a URL param
-    # The client-side JS will pick it up from there.
-    redirect_url = f"{return_to}?session_id={session_id}"
-    return redirect(redirect_url)
+    return render_template("callback.html", session_id=session_id, return_to=return_to)
 
 
 @scanner_bp.route('/scanner/me')

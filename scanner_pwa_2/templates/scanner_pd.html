@@ -1,10 +1,11 @@
+<!-- Updated scanner_pd.html with persistent login button -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-FRCK642NXJ"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
+    function gtag(){dataLayer.push(arguments);} 
     gtag('js', new Date());
     gtag('config', 'G-FRCK642NXJ');
   </script>
@@ -15,7 +16,7 @@
 </head>
 <body class="bg-gray-900 text-white font-sans">
 
-<div id="auth-banner" class="bg-gray-800 text-sm text-right py-1 px-4" style="position: sticky; top: 0; z-index: 10;"></div>
+
 
 <div class="max-w-4xl mx-auto px-4 py-8">
   <h1 class="text-3xl font-bold mb-6 text-center">📻 Today's Police Calls</h1>
@@ -179,51 +180,43 @@ async function submitEdit(filename, feed, id) {
 window.addEventListener('scroll', loadMoreCalls);
 window.addEventListener('touchmove', loadMoreCalls);
 </script>
-
-<script>
-  // Auth status checker
-  (async function checkAuthStatus() {
-    const authBanner = document.getElementById('auth-banner');
-    if (!authBanner) return;
-    const sessionId = localStorage.getItem('session_id');
-
-    function showLoggedOutState() {
-      authBanner.innerHTML = '<a href="/scanner/login?next=' + window.location.pathname + '" class="text-green-400 hover:underline">Login</a>';
-    }
-
-    if (!sessionId) {
-      showLoggedOutState();
-      return;
-    }
-
+<div id="auth-fixed" class="fixed top-4 right-4 z-50">
+  <a id="auth-btn" href="/scanner/login"
+     class="px-3 py-2 rounded-lg bg-blue-700/80 hover:bg-blue-600 backdrop-blur text-white text-sm shadow">
+    🔒 Login
+  </a>
+  <div id="auth-menu" class="hidden bg-gray-800 text-sm text-white rounded-lg shadow p-3 mt-2">
+    <div id="auth-user" class="text-xs text-gray-300 mb-2"></div>
+    <a href="/scanner/logout" class="underline">Logout</a>
+  </div>
+</div>
+<script type="module">
+  async function refreshAuthUI() {
     try {
-      const response = await fetch(`http://localhost:8010/get_session_data?session_id=${sessionId}`);
-
-      if (response.ok) {
-        const data = await response.json();
-        const username = data.userInfo || 'user';
-        authBanner.innerHTML = `
-          <span class="mr-4">Logged in as: <strong>${username}</strong></span>
-          <button onclick="handleLogout()" class="text-red-400 hover:underline">Logout</button>
-        `;
+      // IMPORTANT: ask Flask for status OR call FastAPI directly.
+      // If you added a Flask proxy endpoint, use '/scanner/api/me' instead.
+      const r = await fetch('/scanner/api/me', { cache: 'no-store', credentials: 'same-origin' });
+      const j = await r.json();
+      const btn  = document.getElementById('auth-btn');
+      const menu = document.getElementById('auth-menu');
+      const user = document.getElementById('auth-user');
+      if (j && j.authenticated) {
+        btn.textContent = '👤 Account';
+        btn.href = '#';
+        btn.onclick = (e) => { e.preventDefault(); menu.classList.toggle('hidden'); };
+        user.textContent = (j.user && (j.user.email || j.user.username)) || 'Signed in';
       } else {
-        localStorage.removeItem('session_id');
-        showLoggedOutState();
+        btn.textContent = '🔒 Login';
+        btn.href = '/scanner/login';
+        btn.onclick = null;
+        menu.classList.add('hidden');
       }
-    } catch (error) {
-      console.error('Error checking auth status:', error);
-      authBanner.innerHTML = '<span>Login status unavailable</span>';
-    }
-  })();
-
-  function handleLogout() {
-    const sessionId = localStorage.getItem('session_id');
-    if (sessionId) {
-      fetch(`http://localhost:8010/api/logout?session_id=${sessionId}`, { method: 'POST', keepalive: true }).catch(err => console.error('Logout API call failed:', err));
-    }
-    localStorage.removeItem('session_id');
-    window.location.href = '/scanner/logout';
+    } catch {}
   }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshAuthUI();
+  });
+  window.addEventListener('load', refreshAuthUI);
 </script>
 
 </body>
