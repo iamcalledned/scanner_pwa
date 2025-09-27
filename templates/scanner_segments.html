@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Segment Role Assignment</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-6 text-center text-white">🎙️ Assign Speakers to Segments</h1>
+
+  {% for call in calls %}
+  <div class="mb-6 p-4 rounded-xl bg-gray-800 shadow-md" data-filename="{{ call.file }}">
+    <div class="text-sm text-gray-400 mb-1">{{ call.timestamp_human }}</div>
+
+    <audio class="w-full mb-3" controls src="{{ call.path }}"></audio>
+
+    <div class="mb-2">
+      <span class="text-sm text-gray-400">Transcript:</span>
+      <pre class="whitespace-pre-wrap bg-gray-700 p-3 rounded-md text-sm text-gray-200 overflow-auto mt-1">{{ call.transcript }}</pre>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center mt-2">
+      <div>
+        <label class="block text-sm text-gray-300 mb-1">Role:</label>
+        <select class="bg-gray-900 text-white border border-gray-600 rounded px-2 py-1 text-sm w-full role-select">
+          <option value="">Select Role</option>
+          <option value="officer">Officer</option>
+          <option value="dispatcher">Dispatcher</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm text-gray-300 mb-1">Speaker Name / Badge #:</label>
+        <input type="text" class="bg-gray-900 text-white border border-gray-600 rounded px-2 py-1 text-sm w-full speaker-input" placeholder="e.g., 88 or Lisa" />
+      </div>
+    </div>
+
+    <div class="flex gap-4 mt-4">
+      <button class="bg-green-600 hover:bg-green-700 px-4 py-1 rounded text-sm font-medium text-white save-btn">💾 Save</button>
+      <button class="bg-gray-700 hover:bg-gray-600 px-4 py-1 rounded text-sm font-medium text-white cancel-btn hidden">↩️ Cancel</button>
+      <button class="bg-yellow-600 hover:bg-yellow-700 px-4 py-1 rounded text-sm font-medium text-white undo-btn hidden">Undo</button>
+      <div class="text-green-400 text-sm saved-msg hidden ml-4">✔️ Saved</div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <div class="text-center mt-10">
+    <p class="text-gray-400 text-sm">Make sure to save any changes before leaving this page.</p>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.save-btn').forEach(button => {
+  button.addEventListener('click', async () => {
+    const container = button.closest('[data-filename]');
+    const filename = container.dataset.filename;
+    const role = container.querySelector('.role-select').value.trim();
+    const speaker = container.querySelector('.speaker-input').value.trim();
+
+    if (!role || !speaker) {
+      alert("Please select a role and enter a name or badge number.");
+      return;
+    }
+
+    const payload = { filename, role, speaker };
+    const resp = await fetch("/scanner/submit_segment_roles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (resp.ok) {
+      container.querySelector('.save-btn').classList.add("hidden");
+      container.querySelector('.cancel-btn').classList.remove("hidden");
+      container.querySelector('.undo-btn').classList.remove("hidden");
+      container.querySelector('.saved-msg').classList.remove("hidden");
+    } else {
+      alert("Failed to save.");
+    }
+  });
+});
+
+document.querySelectorAll('.cancel-btn').forEach(button => {
+  button.addEventListener('click', () => {
+    const container = button.closest('[data-filename]');
+    container.querySelector('.role-select').value = "";
+    container.querySelector('.speaker-input').value = "";
+    container.querySelector('.save-btn').classList.remove("hidden");
+    container.querySelector('.cancel-btn').classList.add("hidden");
+    container.querySelector('.undo-btn').classList.add("hidden");
+    container.querySelector('.saved-msg').classList.add("hidden");
+  });
+});
+
+document.querySelectorAll('.undo-btn').forEach(button => {
+  button.addEventListener('click', () => {
+    const container = button.closest('[data-filename]');
+    container.querySelector('.save-btn').classList.remove("hidden");
+    container.querySelector('.cancel-btn').classList.add("hidden");
+    container.querySelector('.undo-btn').classList.add("hidden");
+    container.querySelector('.saved-msg').classList.add("hidden");
+  });
+});
+</script>
+
+</body>
+</html>
+    

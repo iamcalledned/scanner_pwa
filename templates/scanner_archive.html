@@ -1,0 +1,101 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scanner Archive by Day</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6 text-center">📁 Scanner Call Archive by Day</h1>
+    <a href="/scanner" class="text-blue-400 hover:underline">&larr; Back to Today</a>
+    <div class="mt-8">
+      {% for day, calls in archive.items() %}
+        <details class="mb-6 bg-gray-800 rounded-xl shadow-md group">
+          <summary class="cursor-pointer px-4 py-3 text-lg font-semibold text-gray-200 bg-gray-700 rounded-t-xl group-open:rounded-b-none border-b border-gray-700">
+            <span class="mr-2">📂</span>{{ day }} 
+            <span class="ml-2 text-xs text-gray-400 call-count" id="call-count-{{ day }}">({{ call_totals[day] }} calls)</span>
+          </summary>
+          <div class="p-4 call-list" data-day="{{ day }}">
+            {% for call in calls %}
+            <div class="mb-6 p-4 rounded-xl bg-gray-900 shadow">
+              <div class="text-sm text-gray-400 mb-1">{{ call.timestamp_human }}</div>
+              <audio class="w-full mb-2" controls src="{{ call.path }}"></audio>
+              <pre class="whitespace-pre-wrap bg-gray-700 p-3 rounded-md text-sm text-gray-200 overflow-auto">
+{{ call.transcript }}
+              </pre>
+            </div>
+            {% endfor %}
+            {% if calls|length >= calls_per_page %}
+            <button class="load-more bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded mt-2" data-day="{{ day }}" data-page="1">Load more</button>
+            {% endif %}
+          </div>
+        </details>
+      {% endfor %}
+      {% if not archive %}
+      <p class="text-gray-400">No archived calls available yet.</p>
+      {% endif %}
+    </div>
+  </div>
+  <script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Remove or comment out this line for testing:
+  // document.querySelectorAll('details').forEach(function(d) { d.open = false; });
+
+  const callsPerPage = Number('{{ calls_per_page }}');
+  document.querySelectorAll('.call-list').forEach(function(container) {
+    container.addEventListener('click', async function(e) {
+      if (e.target.classList.contains('load-more')) {
+        const btn = e.target;
+        const day = btn.getAttribute('data-day');
+        let page = btn.getAttribute('data-page') ? parseInt(btn.getAttribute('data-page')) + 1 : 2;
+        btn.disabled = true;
+        btn.textContent = 'Loading...';
+        const resp = await fetch(`/scanner/archive?day=${encodeURIComponent(day)}&page=${page}&json=1`);
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.calls && data.calls.length > 0) {
+            data.calls.forEach(call => {
+              const div = document.createElement('div');
+              div.className = 'mb-6 p-4 rounded-xl bg-gray-900 shadow';
+              div.innerHTML = `
+                <div class="text-sm text-gray-400 mb-1">${call.timestamp_human}</div>
+                <audio class="w-full mb-2" controls src="${call.path}"></audio>
+                <pre class="whitespace-pre-wrap bg-gray-700 p-3 rounded-md text-sm text-gray-200 overflow-auto">${call.transcript}</pre>
+              `;
+              container.insertBefore(div, btn);
+            });
+            // Update call count if total is present
+            if (typeof data.total !== 'undefined') {
+              const countSpan = document.getElementById('call-count-' + day);
+              if (countSpan) {
+                countSpan.textContent = `(${data.total} calls)`;
+              }
+            } else {
+              // fallback: update count manually
+              const container = btn.closest('.call-list');
+              const updatedCount = container.querySelectorAll('audio').length;
+              const countSpan = document.getElementById('call-count-' + day);
+              if (countSpan) {
+                countSpan.textContent = `(${updatedCount} calls)`;
+              }
+            }
+            btn.setAttribute('data-page', page);
+            btn.disabled = false;
+            btn.textContent = 'Load more';
+            if (data.calls.length < callsPerPage) {
+              btn.remove();
+            }
+          } else {
+            btn.remove();
+          }
+        } else {
+          btn.textContent = 'Error';
+        }
+      }
+    });
+  });
+});
+  </script>
+</body>
+</html>

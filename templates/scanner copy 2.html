@@ -1,0 +1,82 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scanner Archive</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6 text-center">📻 Scanner Call Archive</h1>
+    <div class="flex justify-between items-center mb-4">
+      <p class="text-sm text-gray-400">Total calls: {{ calls|length }}</p>
+      <a href="/scanner/archive" class="text-blue-400 hover:underline">View Archive &rarr;</a>
+    </div>
+    <div id="calls-container">
+      {% for call in calls %}
+      <div class="mb-6 p-4 rounded-xl bg-gray-800 shadow-md call-entry">
+        <div class="text-sm text-gray-400 mb-1">
+          {{ call.timestamp_human }}
+        </div>
+        <audio class="w-full mb-2" controls src="{{ call.path }}"></audio>
+        <pre class="whitespace-pre-wrap bg-gray-700 p-3 rounded-md text-sm text-gray-200 overflow-auto">
+{{ call.transcript }}
+        </pre>
+      </div>
+      {% endfor %}
+    </div>
+    <div id="loading-indicator" class="text-center text-gray-400 py-4 hidden">Loading more calls...</div>
+    {% if not calls %}
+    <p class="text-gray-400">No calls available yet. Check back soon.</p>
+    {% endif %}
+  </div>
+
+<script>
+let loading = false;
+let page = 1;
+let moreCalls = true;
+function isNearBottom() {
+  // Works for both desktop and mobile browsers
+  return (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 200);
+}
+async function loadMoreCalls() {
+  if (loading || !moreCalls) return;
+  if (!isNearBottom()) return;
+  loading = true;
+  document.getElementById('loading-indicator').classList.remove('hidden');
+  page += 1;
+  const resp = await fetch(`/scanner?page=${page}`, {headers: {Accept: 'application/json'}});
+  if (resp.ok) {
+    const data = await resp.json();
+    if (data.calls && data.calls.length > 0) {
+      const container = document.getElementById('calls-container');
+      data.calls.forEach(call => {
+        const div = document.createElement('div');
+        div.className = 'mb-6 p-4 rounded-xl bg-gray-800 shadow-md call-entry';
+        div.innerHTML = `
+          <div class="text-sm text-gray-400 mb-1 flex items-center gap-2"><span class="inline-block align-middle">🕒</span> <span class="inline-block align-middle">${call.timestamp_human}</span></div>
+          <audio class="w-full mb-2" controls src="${call.path}"></audio>
+          <pre class="whitespace-pre-wrap bg-gray-700 p-3 rounded-md text-sm text-gray-200 overflow-auto">${call.transcript}</pre>
+        `;
+        container.appendChild(div);
+      });
+      loading = false;
+      document.getElementById('loading-indicator').classList.add('hidden');
+      if (data.calls.length < 10) {
+        moreCalls = false;
+      }
+    } else {
+      moreCalls = false;
+      document.getElementById('loading-indicator').classList.add('hidden');
+    }
+  } else {
+    moreCalls = false;
+    document.getElementById('loading-indicator').classList.add('hidden');
+  }
+}
+window.addEventListener('scroll', loadMoreCalls);
+window.addEventListener('touchmove', loadMoreCalls); // for mobile
+</script>
+</body>
+</html>

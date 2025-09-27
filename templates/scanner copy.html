@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📻 Scanner Call Archive</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    <header class="text-center mb-10">
+      <h1 class="text-4xl font-bold mb-2">📻 Scanner Call Archive</h1>
+      <p class="text-sm text-gray-400">Total calls: {{ calls|length }}</p>
+    </header>
+
+    {% if calls %}
+    <section class="space-y-6">
+      {% for call in calls %}
+      <article class="bg-gray-800 rounded-xl shadow-lg transition hover:ring-2 hover:ring-blue-400 p-4">
+        <div class="flex justify-between items-center mb-2">
+          <div class="text-sm text-gray-400">
+            🕒 {{ call.timestamp | datetimeformat("MMM D, h:mm A") }}
+          </div>
+          <span class="text-xs bg-blue-700 px-2 py-1 rounded-full text-white font-mono">
+            Call {{ loop.index }}
+          </span>
+        </div>
+
+        <audio class="w-full mb-3" controls src="{{ call.path }}"></audio>
+
+        <div>
+          <button
+            type="button"
+            class="text-sm text-blue-400 hover:underline focus:outline-none mb-2"
+            onclick="this.nextElementSibling.classList.toggle('hidden')"
+          >
+            📖 View Transcript
+          </button>
+          <pre class="whitespace-pre-wrap bg-gray-700 p-3 rounded text-sm text-gray-200 overflow-auto hidden">
+{{ call.transcript }}
+          </pre>
+        </div>
+      </article>
+      {% endfor %}
+    </section>
+    {% else %}
+    <p class="text-center text-gray-400 mt-10">No calls available yet. Check back soon.</p>
+    {% endif %}
+  </main>
+
+  <script>
+    // Add custom Jinja2 filter for datetime formatting if not already defined in Flask:
+    // @app.template_filter('datetimeformat')
+    // def datetimeformat(value, format="%b %d, %I:%M %p"):
+    //     return datetime.datetime.fromtimestamp(value).strftime(format)
+  </script>
+
+</body>
+</html>
