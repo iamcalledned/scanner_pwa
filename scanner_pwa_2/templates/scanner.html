@@ -46,6 +46,16 @@
     </div>
   </div>
 
+  <div id="scanner-status" class="mt-12 p-6 bg-gray-800 rounded-xl shadow text-center">
+  <h2 class="text-xl font-semibold mb-2">📡 Live Status</h2>
+  <div class="text-gray-300 text-sm">
+    <div>FD: <span id="fd-freq">--</span> Hz</div>
+    <div>PD: <span id="pd-freq">--</span> Hz</div>
+    <div>Signal: <span id="sig-strength">--</span></div>
+  </div>
+</div>
+
+
     <!-- Install button (hidden until beforeinstallprompt fires) -->
 <!-- SW update toast (bottom-left, glass/floaty) -->
 <div class="fixed bottom-6 left-6 z-50 pointer-events-none">
@@ -469,6 +479,20 @@
     if (document.visibilityState === 'visible') refreshAuthUI();
   });
   window.addEventListener('load', refreshAuthUI);
+</script>
+
+<script>
+  async function refreshStatus() {
+    try {
+      const r = await fetch('/scanner/api/status');
+      const j = await r.json();
+      document.getElementById('fd-freq').textContent = j.FD?.frequency || '--';
+      document.getElementById('pd-freq').textContent = j.PD?.frequency || '--';
+      document.getElementById('sig-strength').textContent = j.PD?.strength || '--';
+    } catch {}
+  }
+  setInterval(refreshStatus, 5000);
+  refreshStatus();
 </script>
 
 </body>
