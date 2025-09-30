@@ -10,6 +10,10 @@ import redis
 import push_db
 import push_utils
 
+import socket
+from flask import jsonify
+
+
 app = Flask(__name__)
 app.register_blueprint(scanner_bp)
 app.register_blueprint(api_scanner_bp)
@@ -31,6 +35,41 @@ def manifest():
     if not os.path.exists(mf_path):
         return send_from_directory(app.static_folder, 'manifest.json')
     return send_file(mf_path, mimetype='application/json')
+
+
+@app.route("/scanner/api/status")
+def scanner_status():
+    """
+    Query SDR++ Rigctl server for status (freq, squelch, signal, etc.)
+    """
+    try:
+        # Example: query rigctl on PD (port 4534) or FD (port 4533)
+        # You may want to add params like ?rig=pd to select which.
+        HOST, PORT = "127.0.0.1", 4534
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(1.0)
+            s.connect((HOST, PORT))
+            # rigctl 'f' command = get frequency
+            s.sendall(b"f\n")
+            freq = float(s.recv(1024).strip())
+
+            # rigctl 'l STRENGTH' = signal strength if supported
+            s.sendall(b"l STRENGTH\n")
+            strength = s.recv(1024).decode().strip()
+
+            # rigctl 'l SQL' = squelch state if supported
+            s.sendall(b"l SQL\n")
+            squelch = s.recv(1024).decode().strip()
+
+        return jsonify({
+            "frequency": freq,
+            "strength": strength,
+            "squelch": squelch
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 
 
 @app.route('/scanner/sw.js')
