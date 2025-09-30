@@ -12,6 +12,8 @@ import push_utils
 
 import socket
 from flask import jsonify
+import subprocess
+from flask import jsonify
 
 
 app = Flask(__name__)
@@ -37,37 +39,38 @@ def manifest():
     return send_file(mf_path, mimetype='application/json')
 
 
-@app.route("/scanner/api/status")
-def scanner_status():
-    """
-    Query SDR++ Rigctl server for status (freq, squelch, signal, etc.)
-    """
+
+def query_rigctl(port):
+    """Query SDR++ rigctl server on given port."""
     try:
-        # Example: query rigctl on PD (port 4534) or FD (port 4533)
-        # You may want to add params like ?rig=pd to select which.
-        HOST, PORT = "127.0.0.1", 4534
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.settimeout(1.0)
-            s.connect((HOST, PORT))
-            # rigctl 'f' command = get frequency
-            s.sendall(b"f\n")
-            freq = float(s.recv(1024).strip())
+        rigctl_addr = "127.0.0.1"
 
-            # rigctl 'l STRENGTH' = signal strength if supported
-            s.sendall(b"l STRENGTH\n")
-            strength = s.recv(1024).decode().strip()
+        # Frequency
+        freq_cmd = ["rigctl", "-r", f"{rigctl_addr}:{port}", "f"]
+        freq = subprocess.check_output(freq_cmd, text=True).strip()
 
-            # rigctl 'l SQL' = squelch state if supported
-            s.sendall(b"l SQL\n")
-            squelch = s.recv(1024).decode().strip()
+        # Signal strength
+        strength_cmd = ["rigctl", "-r", f"{rigctl_addr}:{port}", "l"]
+        strength = subprocess.check_output(strength_cmd, text=True).strip()
 
-        return jsonify({
-            "frequency": freq,
+        # Squelch
+        squelch_cmd = ["rigctl", "-r", f"{rigctl_addr}:{port}", "q"]
+        squelch = subprocess.check_output(squelch_cmd, text=True).strip()
+
+        return {
+            "frequency": float(freq) if freq.replace(".", "", 1).isdigit() else freq,
             "strength": strength,
             "squelch": squelch
-        })
+        }
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return {"error": str(e)}
+
+@app.route("/scanner/api/status")
+def scanner_status():
+    return jsonify({
+        "FD": query_rigctl(4534),
+        "PD": query_rigctl(4536)
+    })
 
 
 
