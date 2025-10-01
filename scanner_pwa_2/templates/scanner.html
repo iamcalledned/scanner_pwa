@@ -18,42 +18,57 @@
   <link rel="manifest" href="/scanner/manifest.json">
 </head>
 <body class="bg-gray-900 text-white font-sans">
-
-
+  <!-- Body background with gradient -->
+  <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-gray-900 via-blue-900/50 to-gray-900 -z-10"></div>
 
   <div class="max-w-4xl mx-auto px-4 py-16">
-    <!-- Page header without embedded login button -->
-    <div class="flex items-center justify-center mb-6">
-      <h1 class="text-4xl font-bold text-center">📻 Hopedale Scanner Archive</h1>
+    <!-- Page header with gradient text -->
+    <div class="text-center mb-12">
+      <h1 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 animate-pulse">
+        📻 Hopedale Scanner Archive
+      </h1>
+      <p class="text-gray-400 mt-2">Your front-row seat to local emergencies.</p>
     </div>
     
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <a href="/scanner_pd" class="block bg-gray-800 hover:bg-gray-700 transition p-6 rounded-xl shadow-md text-center">
-        <div class="text-6xl mb-4">🚓</div>
-        <h2 class="text-2xl font-semibold mb-2">Police Calls</h2>
-        <p class="text-gray-400 text-sm">Browse archived scanner calls from the Police channel.</p>
+      <!-- Police Calls Card -->
+      <a href="/scanner_pd" class="group block bg-gray-800/50 backdrop-blur-sm p-8 rounded-2xl shadow-lg hover:shadow-blue-500/20 transition-all duration-300 transform hover:scale-105 ring-1 ring-white/10 hover:ring-blue-400">
+        <div class="text-7xl mb-4 text-center transition-transform duration-300 group-hover:scale-110">🚓</div>
+        <h2 class="text-3xl font-bold text-center text-blue-300 mb-2">Police Calls</h2>
+        <p class="text-gray-400 text-sm text-center">Tap to tune into the police channel archive.</p>
       </a>
 
-      <a href="/scanner_fire" class="block bg-gray-800 hover:bg-gray-700 transition p-6 rounded-xl shadow-md text-center">
-        <div class="text-6xl mb-4">🚒</div>
-        <h2 class="text-2xl font-semibold mb-2">Fire Calls</h2>
-        <p class="text-gray-400 text-sm">Browse archived scanner calls from the Fire/EMS channel.</p>
+      <!-- Fire Calls Card -->
+      <a href="/scanner_fire" class="group block bg-gray-800/50 backdrop-blur-sm p-8 rounded-2xl shadow-lg hover:shadow-red-500/20 transition-all duration-300 transform hover:scale-105 ring-1 ring-white/10 hover:ring-red-400">
+        <div class="text-7xl mb-4 text-center transition-transform duration-300 group-hover:scale-110">🚒</div>
+        <h2 class="text-3xl font-bold text-center text-red-300 mb-2">Fire Calls</h2>
+        <p class="text-gray-400 text-sm text-center">Tap to tune into the fire & EMS channel archive.</p>
       </a>
     </div>
 
-    <div class="mt-12 text-center">
+    <div class="mt-16 text-center">
       <a href="/scanner/archive" class="text-blue-400 hover:underline text-sm">Go to full archive &rarr;</a>
     </div>
   </div>
 
-  <div id="scanner-status" class="mt-12 p-6 bg-gray-800 rounded-xl shadow text-center">
-  <h2 class="text-xl font-semibold mb-2">📡 Live Status</h2>
-  <div class="text-gray-300 text-sm">
-    <div>FD: <span id="fd-freq">--</span> Hz</div>
-    <div>PD: <span id="pd-freq">--</span> Hz</div>
-    <div>Signal: <span id="sig-strength">--</span></div>
+  <!-- "Mission Control" Live Status -->
+  <div id="scanner-status" class="max-w-2xl mx-auto mt-12 p-6 bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-lg ring-1 ring-white/10">
+    <h2 class="text-xl font-semibold mb-4 text-center text-yellow-300">📡 Mission Control: Live Status</h2>
+    <div class="grid grid-cols-3 gap-4 text-center">
+      <div>
+        <div class="text-xs text-gray-400">FD Frequency</div>
+        <div id="fd-freq" class="text-lg font-mono text-green-400">--</div>
+      </div>
+      <div>
+        <div class="text-xs text-gray-400">PD Frequency</div>
+        <div id="pd-freq" class="text-lg font-mono text-green-400">--</div>
+      </div>
+      <div>
+        <div class="text-xs text-gray-400">Signal Strength</div>
+        <div id="sig-strength" class="text-lg font-mono text-green-400">--</div>
+      </div>
+    </div>
   </div>
-</div>
 
 
     <!-- Install button (hidden until beforeinstallprompt fires) -->
