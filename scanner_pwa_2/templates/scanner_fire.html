@@ -15,44 +15,57 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 text-white font-sans">
+  <!-- Body background with gradient -->
+  <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-gray-900 via-red-900/50 to-gray-900 -z-10"></div>
 
-  
 <div class="max-w-4xl mx-auto px-4 py-8">
-  <h1 class="text-3xl font-bold mb-6 text-center">🔥 Fire Scanner Call Archive</h1>
+  <div class="text-center mb-12">
+      <h1 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-500 animate-pulse">
+        🔥 Fire & EMS Calls
+      </h1>
+      <p class="text-gray-400 mt-2">Hopedale Fire Department</p>
+    </div>
+
   <div class="flex justify-between items-center mb-4">
     <p class="text-sm text-gray-400">Total calls: {{ calls|length }}</p>
-    <div class="flex gap-4 items-center">
+    <div class="flex gap-4">
       <a href="/scanner_fire/archive" class="text-blue-400 hover:underline">View Archive &rarr;</a>
     </div>
   </div>
 
-  <div id="calls-container">
-    {% for call in calls %}
-    <div class="mb-6 p-4 rounded-xl bg-gray-800 shadow-md call-entry">
-      <div class="text-sm text-gray-400 mb-1">{{ call.timestamp_human }} {{ call.feed }}</div>
-      <audio class="w-full mb-2" controls src="{{ call.path }}"></audio>
+<div id="calls-container" class="space-y-8">
+  {% for call in calls %}
+  <div class="bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-lg ring-1 ring-white/10">
+    <div class="text-sm text-gray-400 mb-2">{{ call.timestamp_human }} | {{ call.feed }}</div>
+    <audio class="w-full mb-4" controls src="{{ call.path }}"></audio>
 
-      <div class="space-y-2">
-        {% if call.edit_pending %}
-          <div class="text-yellow-400 text-sm">✏️ Edit Pending</div>
-          <pre class="whitespace-pre-wrap bg-yellow-800 p-3 rounded-md text-sm text-yellow-100 overflow-auto">{{ call.edited_transcript }}</pre>
+    <div class="space-y-4">
+      {% if call.edit_pending %}
+        <div>
+          <div class="text-yellow-400 font-semibold text-sm mb-2">✏️ Edit Pending</div>
+          <pre class="whitespace-pre-wrap bg-yellow-800/50 p-3 rounded-md text-sm text-yellow-100 overflow-auto">{{ call.edited_transcript }}</pre>
           <div class="text-sm text-gray-400">Original Transcript:</div>
-          <pre class="whitespace-pre-wrap bg-gray-700 p-3 rounded-md text-sm text-gray-300 overflow-auto">{{ call.transcript }}</pre>
-        {% else %}
-          <pre id="pre-{{ loop.index }}" class="whitespace-pre-wrap bg-gray-700 p-3 rounded-md text-sm text-gray-200 overflow-auto">{{ call.transcript }}</pre>
+          <pre class="whitespace-pre-wrap bg-gray-700/50 p-3 rounded-md text-sm text-gray-300 overflow-auto">{{ call.transcript }}</pre>
+        </div>
+      {% else %}
+        <div>
+          <div class="text-gray-400 font-semibold text-sm mb-2">🎧 Original Transcript</div>
+          <pre id="pre-{{ loop.index }}" class="whitespace-pre-wrap bg-gray-700/50 p-3 rounded-md text-sm text-gray-200 overflow-auto">{{ call.transcript }}</pre>
           <textarea id="edit-{{ loop.index }}" class="w-full bg-gray-800 text-sm p-3 rounded-md text-white border border-gray-600 hidden">{{ call.transcript }}</textarea>
 
-          <div class="flex gap-2">
+          <div class="flex gap-2 mt-2">
             <button onclick="enableEdit({{ loop.index }})" class="text-yellow-400 hover:underline text-sm">Edit</button>
             <button onclick="submitEdit('{{ call.file }}', '{{ call.feed }}', {{ loop.index }})" id="save-{{ loop.index }}" class="hidden text-green-400 hover:underline text-sm">Submit</button>
             <button onclick="cancelEdit({{ loop.index }})" id="cancel-{{ loop.index }}" class="hidden text-red-400 hover:underline text-sm">Cancel</button>
           </div>
           <div id="msg-{{ loop.index }}" class="text-green-400 text-sm hidden">✔️ Thank you for your submission!</div>
-        {% endif %}
-      </div>
+        </div>
+      {% endif %}
     </div>
-    {% endfor %}
   </div>
+  {% endfor %}
+</div>
+
 
   <div id="loading-indicator" class="text-center text-gray-400 py-4 hidden">Loading more calls...</div>
   {% if not calls %}
