@@ -3,21 +3,41 @@ async function refreshAuthUI() {
   try {
     const r = await fetch('/scanner/api/me', { cache: 'no-store', credentials: 'same-origin' });
     const j = await r.json();
-    const btn = document.getElementById('auth-btn');
-    const menu = document.getElementById('auth-menu');
-    const user = document.getElementById('auth-user');
+    const userEl = document.getElementById('auth-user');
+    const loginBtn = document.getElementById('auth-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+
     if (j && j.authenticated) {
-      btn.textContent = '👤 Account';
-      btn.href = '#';
-      btn.onclick = (e) => { e.preventDefault(); menu.classList.toggle('hidden'); };
-      user.textContent = (j.user && (j.user.email || j.user.username)) || 'Signed in';
+      userEl.textContent = (j.user && (j.user.email || j.user.username)) || 'Signed in';
+      userEl.classList.remove('hidden');
+      loginBtn.classList.add('hidden');
+      logoutBtn.classList.remove('hidden');
     } else {
-      btn.textContent = '🔒 Login';
-      btn.href = '/scanner/login';
-      btn.onclick = null;
-      menu.classList.add('hidden');
+      userEl.classList.add('hidden');
+      loginBtn.classList.remove('hidden');
+      logoutBtn.classList.add('hidden');
     }
   } catch { }
+}
+
+// Hamburger Menu
+function initMenu() {
+    console.log("initMenu called");
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    console.log("hamburgerBtn:", hamburgerBtn);
+    console.log("mobileMenu:", mobileMenu);
+
+    if (hamburgerBtn && mobileMenu) {
+        hamburgerBtn.addEventListener('click', () => {
+            console.log("Hamburger button clicked");
+            if (mobileMenu.classList.contains('hidden')) {
+                mobileMenu.classList.remove('hidden');
+            } else {
+                mobileMenu.classList.add('hidden');
+            }
+        });
+    }
 }
 
 // Transcript Editing
@@ -62,6 +82,7 @@ async function submitEdit(filename, feed, id) {
 let loading = false;
 let page = 1;
 let moreCalls = true;
+let totalCalls = 0;
 
 function isNearBottom() {
   return (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 200);
@@ -79,33 +100,55 @@ async function loadMoreCalls(url) {
     const data = await resp.json();
     if (data.calls && data.calls.length > 0) {
       const container = document.getElementById('calls-container');
+      if (page === 2) { // First time loading more calls
+        const initialCalls = document.querySelectorAll('.call-entry');
+        totalCalls = initialCalls.length;
+      }
       data.calls.forEach((call, i) => {
+        totalCalls++;
         const index = page * 10 + i + 1;  // ensure loop index is unique
         const div = document.createElement('div');
-        div.className = 'mb-6 p-4 rounded-xl bg-gray-800 shadow-md call-entry';
+        div.className = 'bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-lg ring-1 ring-white/10 call-entry';
         div.innerHTML = `
-          <div class="text-sm text-gray-400 mb-1">${call.timestamp_human} ${call.feed || ''}</div>
-          <audio class="w-full mb-2" controls src="${call.path}"></audio>
-          <div class="space-y-2">
-            ${call.edit_pending ? `
-              <div class="text-yellow-400 text-sm">✏️ Edit Pending</div>
-              <pre class="whitespace-pre-wrap bg-yellow-800 p-3 rounded-md text-sm text-yellow-100 overflow-auto">${call.edited_transcript}</pre>
-              <div class="text-sm text-gray-400">Original Transcript:</div>
-              <pre class="whitespace-pre-wrap bg-gray-700 p-3 rounded-md text-sm text-gray-300 overflow-auto">${call.transcript}</pre>
-            ` : `
-              <pre id="pre-${index}" class="whitespace-pre-wrap bg-gray-700 p-3 rounded-md text-sm text-gray-200 overflow-auto">${call.transcript}</pre>
+          <div class="text-sm text-gray-400 mb-2">${call.timestamp_human} | ${call.feed}</div>
+          <audio class="w-full mb-4" controls src="${call.path}"></audio>
+          <div class="space-y-4">
+            ${call.metadata && call.metadata.enhanced_transcript ? `
+              <div>
+                <div class="text-purple-400 font-semibold text-sm mb-2">✨ Enhanced Transcript</div>
+                <pre class="whitespace-pre-wrap bg-purple-900/50 p-3 rounded-md text-sm text-purple-100 overflow-auto">${call.metadata.enhanced_transcript}</pre>
+              </div>
+            ` : ''}
+            ${call.metadata && call.metadata.edited_transcript ? `
+              <div>
+                <div class="text-green-400 font-semibold text-sm mb-2">✅ Edited Transcript</div>
+                <pre class="whitespace-pre-wrap bg-green-800/50 p-3 rounded-md text-sm text-green-100 overflow-auto">${call.metadata.edited_transcript}</pre>
+              </div>
+            ` : call.edit_pending ? `
+              <div>
+                <div class="text-yellow-400 font-semibold text-sm mb-2">✏️ Edit Pending</div>
+                <pre class="whitespace-pre-wrap bg-yellow-800/50 p-3 rounded-md text-sm text-yellow-100 overflow-auto">${call.edited_transcript}</pre>
+              </div>
+            ` : ''}
+            <div>
+              <div class="text-gray-400 font-semibold text-sm mb-2">🎧 Original Transcript</div>
+              <pre id="pre-${index}" class="whitespace-pre-wrap bg-gray-700/50 p-3 rounded-md text-sm text-gray-200 overflow-auto">${call.transcript}</pre>
               <textarea id="edit-${index}" class="w-full bg-gray-800 text-sm p-3 rounded-md text-white border border-gray-600 hidden">${call.transcript}</textarea>
-              <div class="flex gap-2">
+              <div class="flex gap-2 mt-2">
                 <button onclick="enableEdit(${index})" class="text-yellow-400 hover:underline text-sm">Edit</button>
                 <button onclick="submitEdit('${call.file}', '${call.feed}', ${index})" id="save-${index}" class="hidden text-green-400 hover:underline text-sm">Submit</button>
                 <button onclick="cancelEdit(${index})" id="cancel-${index}" class="hidden text-red-400 hover:underline text-sm">Cancel</button>
               </div>
               <div id="msg-${index}" class="text-green-400 text-sm hidden">✔️ Thank you for your submission!</div>
-            `}
+            </div>
           </div>
         `;
         container.appendChild(div);
       });
+      const totalCallsEl = document.getElementById('total-calls');
+      if (totalCallsEl) {
+        totalCallsEl.textContent = `Total calls: ${totalCalls}`;
+      }
     } else {
       moreCalls = false;
     }
@@ -114,8 +157,12 @@ async function loadMoreCalls(url) {
   if(loadingIndicator) loadingIndicator.classList.add('hidden');
 }
 
-// Initialize Auth UI
+
+// Initialize
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') refreshAuthUI();
 });
-window.addEventListener('load', refreshAuthUI);
+window.addEventListener('load', () => {
+    refreshAuthUI();
+    initMenu();
+});

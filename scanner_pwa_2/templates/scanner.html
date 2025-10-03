@@ -19,7 +19,7 @@
 </head>
 <body class="bg-gray-900 text-white font-sans">
   <!-- Body background with gradient -->
-  <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-gray-900 via-blue-900/50 to-gray-900 -z-10"></div>
+  <div class="fixed top-0 left-0 w-full h-full bg-gradient-to-br from-gray-900 via-blue-900/50 to-gray-900 -z-10"></div>
 
   <div class="max-w-4xl mx-auto px-4 py-16">
     <!-- Page header with gradient text -->
@@ -112,53 +112,31 @@
   </div>
 </div>
 
-<!-- Notifications menu (glass/floaty like the login) -->
-<div class="fixed bottom-6 right-6 z-50 pointer-events-none">
-  <div
-    id="notif-menu"
-    class="pointer-events-auto px-4 py-3 rounded-2xl
-           bg-gray-900/60 backdrop-blur-md
-           ring-1 ring-white/10 shadow-xl shadow-black/30
-           text-white text-sm transition-all duration-200"
-  >
-    <div class="flex items-center gap-2">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-300" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M10 2a4 4 0 00-4 4v1.586L4.707 10.88A1 1 0 005.414 13h9.172a1 1 0 00.707-1.12L14 7.586V6a4 4 0 00-4-4z"/>
-        <path d="M8 15a2 2 0 104 0H8z"/>
-      </svg>
-      <div id="notif-status" class="leading-5">
-        Notifications: <span id="notif-state" class="font-medium text-white/90">unknown</span>
-      </div>
-    </div>
 
-    <div class="mt-3 flex items-center gap-2">
-      <button
-        id="notif-toggle"
-        class="px-3 py-1.5 rounded-lg
-               bg-blue-700/80 hover:bg-blue-600
-               backdrop-blur-sm
-               ring-1 ring-white/10
-               shadow-sm transition"
-      >
-        Enable
-      </button>
-      <button
-        id="notif-unsub"
-        class="hidden px-3 py-1.5 rounded-lg
-               bg-gray-700/80 hover:bg-gray-700
-               backdrop-blur-sm
-               ring-1 ring-white/10
-               shadow-sm transition"
-      >
-        Disable
-      </button>
-    </div>
 
-    <div id="notif-msg" class="mt-2 text-xs text-white/70"></div>
+
+  <div class="fixed top-4 left-4 z-50">
+  <button id="hamburger-btn" class="p-2 rounded-md bg-gray-800/50 text-white hover:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  </button>
+  <div id="mobile-menu" class="hidden absolute top-12 left-0 bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg p-4 space-y-2">
+    <div id="auth-user" class="text-xs text-gray-300"></div>
+    <a id="auth-btn" href="/scanner/login" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-white hover:bg-gray-700">
+      🔒 Login
+    </a>
+    <a href="/scanner/logout" id="logout-btn" class="hidden block w-full text-left px-3 py-2 rounded-md text-base font-medium text-white hover:bg-gray-700">
+      Logout
+    </a>
   </div>
 </div>
 
 
+  <script>
+    console.log("test");
+  </script>
+  <script src="/static/js/app.js"></script>
   <script src="/static/js/pwa.js"></script>
 </body>
 </html>
