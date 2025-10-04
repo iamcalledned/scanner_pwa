@@ -187,5 +187,40 @@ async function refreshStatus() {
     if(sigStrength) sigStrength.textContent = j.PD?.strength || '--';
   } catch {}
 }
+async function refreshLastCallTimestamps() {
+  try {
+    // Fetch last police call
+    const pdResp = await fetch('/scanner_pd?page=1', { headers: { Accept: 'application/json' } });
+    if (pdResp.ok) {
+      const pdData = await pdResp.json();
+      if (pdData.calls && pdData.calls.length > 0) {
+        const pdLastCall = document.getElementById('pd-last-call');
+        if (pdLastCall) {
+          pdLastCall.textContent = `Last call: ${pdData.calls[0].timestamp_human}`;
+        }
+      }
+    }
+
+    // Fetch last fire call
+    const fireResp = await fetch('/scanner_fire?page=1', { headers: { Accept: 'application/json' } });
+    if (fireResp.ok) {
+      const fireData = await fireResp.json();
+      if (fireData.calls && fireData.calls.length > 0) {
+        const fireLastCall = document.getElementById('fire-last-call');
+        if (fireLastCall) {
+          fireLastCall.textContent = `Last call: ${fireData.calls[0].timestamp_human}`;
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Error refreshing last call timestamps:", e);
+  }
+}
+
 setInterval(refreshStatus, 5000);
 refreshStatus();
+
+window.addEventListener('load', () => {
+  refreshLastCallTimestamps();
+  setInterval(refreshLastCallTimestamps, 60000); // Refresh every 60 seconds
+});
