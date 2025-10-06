@@ -3,6 +3,7 @@ import os
 from routes.routes_scanner import scanner_bp
 from routes.routes_api_scanner import api_scanner_bp
 import datetime
+from routes.routes_auth import auth_bp
 import json
 from routes.routes_push import push_bp
 import threading
@@ -104,6 +105,7 @@ def static_files(filename):
 app.register_blueprint(scanner_bp)
 app.register_blueprint(api_scanner_bp)
 app.register_blueprint(push_bp)
+app.register_blueprint(auth_bp)
 
 
 # ---- API endpoint for user count ----
