@@ -105,8 +105,7 @@ async function loadMoreCalls(url) {
         totalCalls = initialCalls.length;
       }
       data.calls.forEach((call, i) => {
-        totalCalls++;
-        const index = page * 10 + i + 1;  // ensure loop index is unique
+        const index = totalCalls++; // Use the running total for a guaranteed unique index
         const div = document.createElement('div');
         div.className = 'bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-lg ring-1 ring-white/10 call-entry';
         div.innerHTML = `
