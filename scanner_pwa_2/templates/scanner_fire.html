@@ -74,9 +74,10 @@
 </div>
 
 <script src="/static/js/app.js"></script>
+<script src="/static/js/pwa.js"></script>
 <script>
-  window.addEventListener('scroll', () => loadMoreCalls('/scanner_fire'));
-  window.addEventListener('touchmove', () => loadMoreCalls('/scanner_fire'));
+  window.addEventListener('scroll', () => loadMoreCalls('/scanner_fire'), { passive: true });
+  window.addEventListener('touchmove', () => loadMoreCalls('/scanner_fire'), { passive: true });
 </script>
 <div class="fixed top-4 left-4 z-50">
   <button id="hamburger-btn" class="p-2 rounded-md bg-gray-800/50 text-white hover:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
