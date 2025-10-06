@@ -17,9 +17,6 @@ from flask import jsonify
 
 
 app = Flask(__name__)
-app.register_blueprint(scanner_bp)
-app.register_blueprint(api_scanner_bp)
-app.register_blueprint(push_bp)
 
 
 # Serve service worker and manifest at site root so scope covers the whole app
