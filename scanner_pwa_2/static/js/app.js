@@ -6,23 +6,16 @@ async function refreshAuthUI() {
     const userEl = document.getElementById('auth-user');
     const loginBtn = document.getElementById('auth-btn');
     const logoutBtn = document.getElementById('logout-btn');
-    const authElements = document.querySelectorAll('.requires-auth');
 
     if (j && j.authenticated) {
       userEl.textContent = (j.user && (j.user.email || j.user.username)) || 'Signed in';
       userEl.classList.remove('hidden');
       loginBtn.classList.add('hidden');
       logoutBtn.classList.remove('hidden');
-      authElements.forEach(el => {
-        el.classList.remove('hidden');
-      });
     } else {
       userEl.classList.add('hidden');
       loginBtn.classList.remove('hidden');
       logoutBtn.classList.add('hidden');
-      authElements.forEach(el => {
-        el.classList.add('hidden');
-      });
     }
   } catch { }
 }
