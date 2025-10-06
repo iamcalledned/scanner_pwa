@@ -94,6 +94,11 @@ def scanner_icons(filename):
 def scanner_offline():
     return send_from_directory(app.static_folder, 'offline.html')
 
+# Add a general static file handler
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    return send_from_directory(app.static_folder, filename)
+
 
 # ---- API endpoint for user count ----
 @app.route('/scanner/api/users')
