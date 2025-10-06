@@ -17,6 +17,10 @@ from flask import jsonify
 
 
 app = Flask(__name__)
+app.register_blueprint(scanner_bp)
+app.register_blueprint(api_scanner_bp)
+app.register_blueprint(push_bp)
+
 
 # Serve service worker and manifest at site root so scope covers the whole app
 @app.route('/sw.js')
@@ -25,11 +29,6 @@ def service_worker():
     if not os.path.exists(sw_path):
         return send_from_directory(app.static_folder, 'sw.js')
     return send_file(sw_path, mimetype='application/javascript')
-
-
-@app.route('/favicon.ico')
-def favicon():
-    return send_from_directory(os.path.join(app.static_folder, 'icons'), 'icon-192.png', mimetype='image/png')
 
 
 @app.route('/manifest.json')
@@ -99,11 +98,6 @@ def scanner_offline():
 @app.route('/static/<path:filename>')
 def static_files(filename):
     return send_from_directory(app.static_folder, filename)
-
-# Register blueprints after specific root routes are defined
-app.register_blueprint(scanner_bp)
-app.register_blueprint(api_scanner_bp)
-app.register_blueprint(push_bp)
 
 
 # ---- API endpoint for user count ----
