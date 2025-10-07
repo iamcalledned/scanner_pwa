@@ -176,6 +176,17 @@ def scanner_fd():
     # Delegate to the existing scanner_fire handler
     return scanner_fire()
 
+@scanner_bp.route("/scanner_mpd")
+def scanner_mpd():
+    calls = load_calls(f"{ARCHIVE_DIR}/spare", feed="spare", filter_today=True)
+    page = int(request.args.get("page", 1))
+    start = (page - 1) * CALLS_PER_PAGE
+    end = start + CALLS_PER_PAGE
+    if request.headers.get("Accept") == "application/json":
+        return jsonify({"calls": calls[start:end]})
+    return render_template("scanner_mpd.html", calls=calls[:CALLS_PER_PAGE])
+
+
 
 @scanner_bp.route("/scanner")
 def scanner_list():
@@ -253,6 +264,7 @@ def scanner_audio(filename):
     search_paths = [
         Path("/home/ned/scanner_archive/clean/pd"),
         Path("/home/ned/scanner_archive/clean/fd"),
+        Path("/home/ned/scanner_archive/clean/spare"),
         Path("/home/ned/scanner_archive/segmentation/processed")
     ]
 
