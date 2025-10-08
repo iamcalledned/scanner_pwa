@@ -14,10 +14,10 @@ import requests
 scanner_bp = Blueprint("scanner", __name__)
 LOGIN_PROCESS_URL = os.environ.get('LOGIN_PROCESS_URL', 'http://127.0.0.1:8010/api/login')
 LOGIN_API_URL = os.environ.get('LOGIN_API_URL', 'http://127.0.0.1:8010')
-ARCHIVE_DIR = "/home/ned/scanner_archive/clean"
-PD_DIR = Path("/home/ned/scanner_archive/clean/pd")
-REVIEW_DIR = Path("/home/ned/scanner_archive/review")
-SEGMENT_DIR = Path("/home/ned/scanner_archive/segmentation/processed")
+ARCHIVE_DIR = "/media/ned/1TBHDD-2/scanner_archive/clean"
+PD_DIR = Path("/media/ned/1TBHDD-2/scanner_archive/clean/pd")
+REVIEW_DIR = Path("/media/ned/1TBHDD-2/scanner_archive/review")
+SEGMENT_DIR = Path("/media/ned/1TBHDD-2/scanner_archive/segmentation/processed")
 CALLS_PER_PAGE = 10
 
 # Simple in-memory active user registry. Key: client_id -> {last_seen, ip, ua, page}
@@ -178,7 +178,7 @@ def scanner_fd():
 
 @scanner_bp.route("/scanner_mpd")
 def scanner_mpd():
-    calls = load_calls(f"{ARCHIVE_DIR}/spare", feed="spare", filter_today=True)
+    calls = load_calls(f"{ARCHIVE_DIR}/mpd", feed="mpd", filter_today=True)
     page = int(request.args.get("page", 1))
     start = (page - 1) * CALLS_PER_PAGE
     end = start + CALLS_PER_PAGE
@@ -262,10 +262,10 @@ def scanner_fire_archive():
 @scanner_bp.route("/scanner/audio/<filename>")
 def scanner_audio(filename):
     search_paths = [
-        Path("/home/ned/scanner_archive/clean/pd"),
-        Path("/home/ned/scanner_archive/clean/fd"),
-        Path("/home/ned/scanner_archive/clean/spare"),
-        Path("/home/ned/scanner_archive/segmentation/processed")
+        Path("/media/ned/1TBHDD-2/scanner_archive/clean/pd"),
+        Path("/media/ned/1TBHDD-2/scanner_archive/clean/fd"),
+        Path("/media/ned/1TBHDD-2/scanner_archive/clean/mpd"),
+        Path("/media/ned/1TBHDD-2/scanner_archive/segmentation/processed")
     ]
 
     for path in search_paths:
@@ -293,7 +293,7 @@ def submit_edit():
     new_transcript = data.get("transcript", "").strip()
     feed = data.get("feed", "pd")
 
-    src_dir = Path(f"/home/ned/scanner_archive/clean/{feed}")
+    src_dir = Path(f"/media/ned/1TBHDD-2/scanner_archive/clean/{feed}")
     src_wav = src_dir / filename
     src_json = src_wav.with_suffix(".json")
 
